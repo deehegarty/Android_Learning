@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">RecyclerView</string>
+    <string name="action_settings">Settings</string>
+    <string name="breed_textview">Default Breed</string>
+    <string name="cat_name">Cat Name</string>
+    <string name="cat_age">Cat Age</string>
+</resources>

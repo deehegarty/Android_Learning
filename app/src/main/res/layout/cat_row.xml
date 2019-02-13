@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools" android:layout_width="wrap_content"
+        android:layout_height="wrap_content" xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <TextView
+            android:id="@+id/breedName"
+            android:text="@string/breed_textview"
+            android:textColor="@color/colorAccent"
+            android:textSize="40sp"
+            android:padding="@dimen/list_spacing"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            android:layout_marginEnd="8dp"
+            android:layout_marginRight="8dp"/>
+
+    <TextView
+            android:id="@+id/catName"
+            android:textSize="12sp"
+            android:text="@string/cat_name"
+            android:padding="@dimen/list_spacing"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintTop_toBottomOf="@+id/breedName"
+            app:layout_constraintStart_toStartOf="parent"/>
+
+    <TextView
+            android:id="@+id/catAge"
+            android:textSize="12sp"
+            android:text="@string/cat_age"
+            android:layout_marginStart="10dp"
+            android:padding="@dimen/list_spacing"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintTop_toBottomOf="@+id/breedName"
+            app:layout_constraintStart_toEndOf="@+id/catName"
+            android:layout_marginLeft="10dp"/>
+
+</android.support.constraint.ConstraintLayout>

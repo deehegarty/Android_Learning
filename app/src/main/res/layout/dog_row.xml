@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools" android:layout_width="wrap_content"
+        android:layout_height="wrap_content" xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <TextView
+            android:id="@+id/breedName"
+            android:text="@string/breed_textview"
+            android:textColor="@color/colorPrimaryDark"
+            android:textSize="40sp"
+            android:padding="@dimen/list_spacing"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            tools:ignore="MissingConstraints"/>
+
+    <TextView
+            android:id="@+id/dogName"
+            android:textSize="12sp"
+            android:padding="@dimen/list_spacing"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintTop_toBottomOf="@+id/breedName"
+            tools:ignore="MissingConstraints"/>
+
+    <TextView
+            android:id="@+id/dogAge"
+            android:textSize="12sp"
+            android:padding="@dimen/list_spacing"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintTop_toBottomOf="@+id/dogName"
+            tools:ignore="MissingConstraints"/>
+
+</android.support.constraint.ConstraintLayout>
