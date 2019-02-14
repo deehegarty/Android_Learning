@@ -39,10 +39,14 @@ class animalAdapter(val animals: ArrayList<Animal>) : RecyclerView.Adapter<anima
 
         // bind the value inside the dog object to the element in the xml
         override fun bind(animal: Animal) {
+            //cast to dog
             val dog = animal as dog
-            breed.setText(dog.breed)
-            name.setText(dog.name)
-            age.setText(dog.age.toString())
+
+            // using Kotlin synthax instead of Java synthax
+            // breed.setText() = dog.breed
+            breed.text = dog.breed
+            name.text = dog.name
+            age.text = dog.age.toString()
         }
     }
 
@@ -56,8 +60,8 @@ class animalAdapter(val animals: ArrayList<Animal>) : RecyclerView.Adapter<anima
         // bind the value inside the cat object to the element in the xml
         override fun bind(animal: Animal) {
             val cat = animal as cat
-            breed.setText(cat.breed)
-            name.setText(cat.name)
+            breed.text = cat.breed
+            name.text = cat.name
         }
     }
 
