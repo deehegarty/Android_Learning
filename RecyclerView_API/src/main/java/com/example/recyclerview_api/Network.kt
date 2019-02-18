@@ -8,27 +8,45 @@ import retrofit2.Retrofit
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
 import retrofit2.converter.gson.GsonConverterFactory
 
-
-// https://api.themoviedb.org/3/search/multi?api_key=9b3978a022a1ac181a73ce6688f0ab93&language=en-US&query=test&page=1&include_adult=false
-
+// Retrofit client
+// Pass the API Key & actual query
 interface MediaService {
 
     @GET("search/multi?language=en-US&include_adult=false&page=1")
     fun search(@Query("api_key") apyKey: String,
                @Query("query") query: String): Flowable<MediaResponse>
+
 }
 
+
+// MediaResponse is specific to the data we want to retrieve from the API:
+// Number of results retrieved & list containing multiple results that matched query
+// @SerializedName can be used for storing retrieved attributes into a variable
 data class MediaResponse(@SerializedName("total_results") val total: Int,
-                         val results: List<Result>)
+                         val results: List<MediaResult>)
 
-data class Result(@SerializedName("media_type") val type: String,
-                  @SerializedName("original_title") val title: String)
 
+// Retrieve the specific attributes from the results that were retrieved
+// This will then propagate each view/row in the RecyclerView
+data class MediaResult(@SerializedName("media_type") val type: String,
+                       @SerializedName("original_title") val origMovieName: String,
+                       @SerializedName("title") val movieName: String,
+                       @SerializedName("overview") val description: String,
+                       @SerializedName("first_air_date") val aired: String,
+                       @SerializedName("name") val tvName: String)
+
+
+// Client for retrieving Media related queries via the MediaService
 class MediaClient {
 
+    // MediaService - interface defined above (Retrofit Client)
     private val service: MediaService
+    // environment variable
+    val api_key = "RECYCLER_API_KEY"
 
     init {
+        // IMPORTANT:
+        // specifies how to generate implementation of MediaService
         val retrofit = Retrofit.Builder()
             .baseUrl("https://api.themoviedb.org/3/")
             .addConverterFactory(GsonConverterFactory.create())

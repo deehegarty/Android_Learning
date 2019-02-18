@@ -1,15 +1,18 @@
 package com.example.recyclerview_api
 
 import android.support.v7.widget.RecyclerView
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 
-class MediaAdapter(val mediaData: ArrayList<Media>) : RecyclerView.Adapter<MediaAdapter.BaseViewHolder>() {
+class MediaAdapter : RecyclerView.Adapter<MediaAdapter.BaseViewHolder>() {
 
     private val MOVIE_TYPE = 0
     private val TV_TYPE = 1
+
+    private val mediaData: ArrayList<Media> = ArrayList()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BaseViewHolder {
         // inflate different layouts depending on the viewType
@@ -82,6 +85,13 @@ class MediaAdapter(val mediaData: ArrayList<Media>) : RecyclerView.Adapter<Media
             MediaType.Tv -> TV_TYPE
             MediaType.Movie -> MOVIE_TYPE
         }
+    }
+
+    // update with new data
+    fun updateData(newData: ArrayList<Media>) {
+        mediaData.clear()
+        mediaData.addAll(newData)
+        notifyDataSetChanged()
     }
 
 }
