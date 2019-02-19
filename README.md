@@ -378,3 +378,75 @@ class MainActivity : AppCompatActivity() {
         mediaAdapter.updateData(mediaData)
     }
 ```
+
+---
+
+### MVP
+
+*resource referenced - https://hackernoon.com/https-medium-com-rohitss-android-app-architectures-mvp-with-kotlin-f255b236010a* & *https://codelabs.developers.google.com/codelabs/android-testing/index.html?index=..%2F..index#3*  
+
+* The model provides and stores the internal data. 
+* The view handles the display of data (ie. the model).  
+* The presenter sits between the model and view: it coordinates the UI with the data, ensuring they are in sync.  
+
+
+Define a contract that decsribes the behaviours of the View (display), Presenter (threads & logic) and Repository (API calls).  
+
+```
+
+// acts as a contract for Media related View, Presenter and Repository
+interface MediaContract {
+
+    interface View {
+        fun showNoMatchesError()
+        fun showGenericError()
+        fun showMedia(media: ArrayList<Media>)
+    }
+
+    interface Presenter {
+        fun searchMedia(query: String)
+    }
+
+    interface Repository {
+        fun search(query: String): Flowable<MediaResponse>
+    }
+}
+
+```
+
+Next create implementing classes:
+
+```
+
+class MediaPresenter(private val view: MediaContract.View, private val repository: MediaContract.Repository) :
+    MediaContract.Presenter {
+
+    override fun searchMedia(query: String) {
+
+    }
+
+}
+
+class MediaRepository(private val client: MediaClient) : MediaContract.Repository {
+
+    override fun search(query: String): Flowable<MediaResponse> {
+      // return ____
+    }
+}
+
+```
+
+MainActivity will implement the `MediaContract.View` interface - making it the main view.
+
+```
+
+class MainActivity : AppCompatActivity(), MediaContract.View {
+
+  // ...
+
+}
+
+```
+
+The behaviours that are currently in the `MainActivity` can now be divided correctly into `MediaContract.Presenter` and `MediaContract.Repository`.
+

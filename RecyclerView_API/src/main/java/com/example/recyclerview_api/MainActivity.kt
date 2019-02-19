@@ -6,28 +6,29 @@ import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.util.Log
 import android.widget.Toast
+import io.reactivex.Flowable
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_main.*
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), MediaContract.View {
 
     private var disposable: Disposable? = null
-    private lateinit var mediaAdapter: MediaAdapter // declare adapter
+    // declare adapter
+    private lateinit var mediaAdapter: MediaAdapter
+    // declare & initialize Presenter
+    private val mediaPresenter: MediaPresenter = MediaPresenter(this, MediaRepository(MediaClient()))
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // create dummy data (Movie and Tv - Media Type reference)
-        val mediaData: ArrayList<Media> = ArrayList()
-
-        // Access RecyclerView in activity_main.xml
-        // create layout manager
-        // and instantiate adapter
+        // access RecyclerView in activity_main.xml create layout manager and instantiate adapter
         recyclerViewXml.layoutManager = LinearLayoutManager(this) as RecyclerView.LayoutManager?
+
+        // initialize adapter
         mediaAdapter = MediaAdapter()
         recyclerViewXml.adapter = mediaAdapter
     }
@@ -35,36 +36,71 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
 
-        // create a MediaClient to make API call
-        val mediaClient = MediaClient()
-
-        // for now the query sent to API will be "test"
-        // this query will be on a new thread that is
-        // managed by a scheduler. The lines specified below
-        // the observer will take place in the main thread.
-        disposable = mediaClient.executeSearch("test")
-            .subscribeOn(Schedulers.newThread())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe(
-                { mediaResponse -> handleResponse(mediaResponse) },
-                { error -> handleError(error) }
-            )
+        mediaPresenter.searchMedia("test")
     }
 
-    // Save instance
     override fun onSaveInstanceState(outState: Bundle?) {
         super.onSaveInstanceState(outState)
     }
 
-    // One destroyed finish any current API calls/queries
     override fun onDestroy() {
         disposable?.dispose()
         super.onDestroy()
     }
 
-    // Define how response is handled
-    // if movie or tv
-    private fun handleResponse(response: MediaResponse) {
+    override fun showNoMatchesError() {
+        Toast.makeText(this, "Error while matching", Toast.LENGTH_LONG).show()
+    }
+
+    override fun showGenericError() {
+        Toast.makeText(this, "Error", Toast.LENGTH_LONG).show()
+    }
+
+    override fun showMedia(media: ArrayList<Media>) {
+        mediaAdapter.updateData(media)
+    }
+
+}
+
+// acts as a contract for Media related View, Presenter and Repository
+interface MediaContract {
+
+    interface View {
+        fun showNoMatchesError()
+        fun showGenericError()
+        fun showMedia(media: ArrayList<Media>)
+    }
+
+    interface Presenter {
+        fun searchMedia(query: String)
+    }
+
+    interface Repository {
+        fun search(query: String): Flowable<MediaResponse>
+    }
+}
+
+class MediaPresenter(private val view: MediaContract.View, private val repository: MediaContract.Repository) :
+    MediaContract.Presenter {
+
+    override fun searchMedia(query: String) {
+        repository.search(query)
+            .subscribeOn(Schedulers.newThread())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(
+                { mediaResponse ->
+                    // convert to media list first
+                    val convertedResponse: ArrayList<Media> = this.handleResponse(mediaResponse)
+
+                    // then pass to view to display
+                    view.showMedia(convertedResponse)
+                },
+                { error -> view.showGenericError() }
+            )
+    }
+
+    // Convert MediaResponse to a ArrayList<Media> and return
+    private fun handleResponse(response: MediaResponse): ArrayList<Media> {
         val mediaData: ArrayList<Media> = ArrayList()
         val returnedData: List<MediaResult> = response.results
 
@@ -79,7 +115,7 @@ class MainActivity : AppCompatActivity() {
                         result.description
                     )
                 )
-            } else {
+            } else if (result.type.toLowerCase() == "movie") {
                 // MOVIE OBJECT
                 mediaData.add(
                     Movie(
@@ -90,12 +126,13 @@ class MainActivity : AppCompatActivity() {
                 )
             }
         }
-        // update the adapter with retrieved data
-        mediaAdapter.updateData(mediaData)
+        return mediaData
     }
+}
 
-    // Define how an error is handled
-    private fun handleError(error: Throwable) {
-        Toast.makeText(this, "Error", Toast.LENGTH_LONG).show()
+class MediaRepository(private val client: MediaClient) : MediaContract.Repository {
+
+    override fun search(query: String): Flowable<MediaResponse> {
+        return client.executeSearch(query)
     }
 }
