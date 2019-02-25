@@ -28,12 +28,12 @@ data class MediaResponse(@SerializedName("total_results") val total: Int,
 
 // Retrieve the specific attributes from the results that were retrieved
 // This will then propagate each view/row in the RecyclerView
-data class MediaResult(@SerializedName("media_type") val type: String,
-                       @SerializedName("original_title") val origMovieName: String,
-                       @SerializedName("title") val movieName: String,
-                       @SerializedName("overview") val description: String,
-                       @SerializedName("first_air_date") val aired: String,
-                       @SerializedName("name") val tvName: String)
+data class MediaResult(@SerializedName("media_type") val type: String = "",
+                       @SerializedName("original_title") val origMovieName: String = "",
+                       @SerializedName("title") val movieName: String = "",
+                       @SerializedName("overview") val description: String = "",
+                       @SerializedName("first_air_date") val aired: String = "",
+                       @SerializedName("name") val tvName: String = "")
 
 
 // Client for retrieving Media related queries via the MediaService

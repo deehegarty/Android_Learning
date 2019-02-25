@@ -1,17 +1,17 @@
 package com.example.recyclerview_api
 
-import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
-import android.util.Log
 import android.widget.Toast
 import io.reactivex.Flowable
-import io.reactivex.Observable
+import io.reactivex.Scheduler
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_main.*
+import java.util.*
 
 class MainActivity : AppCompatActivity(), MediaContract.View {
 
@@ -19,7 +19,7 @@ class MainActivity : AppCompatActivity(), MediaContract.View {
     // declare adapter
     private lateinit var mediaAdapter: MediaAdapter
     // declare & initialize Presenter
-    private val mediaPresenter: MediaPresenter = MediaPresenter(this, MediaRepository(MediaClient()))
+    private val mediaPresenter: MediaPresenter = MediaPresenter(this, MediaRepository(MediaClient()), Executors())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,6 +31,7 @@ class MainActivity : AppCompatActivity(), MediaContract.View {
         // initialize adapter
         mediaAdapter = MediaAdapter()
         recyclerViewXml.adapter = mediaAdapter
+
     }
 
     override fun onResume() {
@@ -80,20 +81,31 @@ interface MediaContract {
     }
 }
 
-class MediaPresenter(private val view: MediaContract.View, private val repository: MediaContract.Repository) :
+data class Executors(val worker: Scheduler = Schedulers.newThread(), val ui: Scheduler = AndroidSchedulers.mainThread())
+
+class MediaPresenter(
+    private val view: MediaContract.View,
+    private val repository: MediaContract.Repository,
+    private val executor: Executors
+) :
     MediaContract.Presenter {
 
     override fun searchMedia(query: String) {
         repository.search(query)
-            .subscribeOn(Schedulers.newThread())
-            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeOn(executor.worker)
+            .observeOn(executor.ui)
             .subscribe(
                 { mediaResponse ->
                     // convert to media list first
                     val convertedResponse: ArrayList<Media> = this.handleResponse(mediaResponse)
 
-                    // then pass to view to display
-                    view.showMedia(convertedResponse)
+                    if (convertedResponse.size == 0) {
+                        // if no valid Media results
+                        view.showNoMatchesError()
+                    } else {
+                        // then pass to view to display
+                        view.showMedia(convertedResponse)
+                    }
                 },
                 { error -> view.showGenericError() }
             )

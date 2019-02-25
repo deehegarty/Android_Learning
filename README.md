@@ -448,5 +448,48 @@ class MainActivity : AppCompatActivity(), MediaContract.View {
 
 ```
 
-The behaviours that are currently in the `MainActivity` can now be divided correctly into `MediaContract.Presenter` and `MediaContract.Repository`.
+The behaviours that are currently in the `MainActivity` can now be divided correctly into `MediaContract.Presenter` and `MediaContract.Repository` - commit 96a3e0e.
 
+
+---
+
+### Mockito - Unit Testing
+
+Update `build.gradle` to include Mockito 2 dependencies and sync.
+
+```
+repositories { jcenter() }
+
+dependencies {
+    
+    // ...
+
+    testCompile "org.mockito:mockito-core:2.+"
+
+  }
+
+```
+
+```
+
+        val query = "test"
+
+        val result1 = MediaResult("tv", tvName = "Original TV Test")
+        val result2 = MediaResult("movie", "Original Movie Test")
+        val results = listOf(result1, result2)
+
+        val response = MediaResponse(results.size, results)
+        whenever(repository.search(query)).thenReturn(Flowable.just(response))
+
+        presenter.searchMedia(query)
+
+        verify(view, never()).showNoMatchesError()
+
+        argumentCaptor<ArrayList<Media>>().apply {
+            verify(view, times(1)).showMedia(capture())
+
+            val mediaList = firstValue
+            assertEquals(2, mediaList.size)
+            assertEquals("Original TV Test", (mediaList[0] as Tv).episodeTitle)
+        }
+```
