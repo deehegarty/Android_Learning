@@ -1,5 +1,6 @@
 package com.example.recyclerview_api
 
+import android.arch.lifecycle.LifecycleOwner
 import android.util.Log
 import com.nhaarman.mockitokotlin2.*
 import io.reactivex.Flowable
@@ -11,8 +12,9 @@ class MediaPresenterTest {
 
     private val scheduler = Schedulers.trampoline()
     private val view = mock<MediaContract.View>()
+    private val owner = mock<LifecycleOwner>()
     private val repository: MediaContract.Repository = mock()
-    private val presenter = MediaPresenter(view, repository, Executors(scheduler, scheduler))
+    private val presenter = MediaPresenter(owner, view, repository, Executors(scheduler, scheduler), MediaDataHolder())
 
 
     @Test

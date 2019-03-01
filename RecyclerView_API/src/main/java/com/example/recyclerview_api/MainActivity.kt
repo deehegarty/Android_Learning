@@ -1,5 +1,8 @@
 package com.example.recyclerview_api
 
+import android.arch.lifecycle.LifecycleOwner
+import android.arch.lifecycle.ViewModelProvider
+import android.arch.lifecycle.ViewModelProviders
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.LinearLayoutManager
@@ -8,22 +11,27 @@ import android.widget.Toast
 import io.reactivex.Flowable
 import io.reactivex.Scheduler
 import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_main.*
 import java.util.*
 
 class MainActivity : AppCompatActivity(), MediaContract.View {
 
-    private var disposable: Disposable? = null
-    // declare adapter
     private lateinit var mediaAdapter: MediaAdapter
     // declare & initialize Presenter
-    private val mediaPresenter: MediaPresenter = MediaPresenter(this, MediaRepository(MediaClient()), Executors())
+    private val mediaPresenter: MediaPresenter =
+        MediaPresenter(
+            this,
+            this,
+            MediaRepository(MediaClient()),
+            Executors(),
+            ViewModelProviders.of(this).get(MediaDataHolder::class.java)
+        )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
 
         // access RecyclerView in activity_main.xml create layout manager and instantiate adapter
         recyclerViewXml.layoutManager = LinearLayoutManager(this) as RecyclerView.LayoutManager?
@@ -45,7 +53,7 @@ class MainActivity : AppCompatActivity(), MediaContract.View {
     }
 
     override fun onDestroy() {
-        disposable?.dispose()
+        mediaPresenter.destroy()
         super.onDestroy()
     }
 
@@ -84,31 +92,54 @@ interface MediaContract {
 data class Executors(val worker: Scheduler = Schedulers.newThread(), val ui: Scheduler = AndroidSchedulers.mainThread())
 
 class MediaPresenter(
+    private val owner: LifecycleOwner,
     private val view: MediaContract.View,
     private val repository: MediaContract.Repository,
-    private val executor: Executors
+    private val executor: Executors,
+    private val dataHolder: MediaDataHolder
 ) :
     MediaContract.Presenter {
 
     override fun searchMedia(query: String) {
-        repository.search(query)
+        dataHolder.query = query
+
+        dataHolder.data.value?.apply {
+            showMediaResponse(this)
+        } ?: run {
+            makeOwnerAware()
+            retrieveMedia(query)
+        }
+    }
+
+    private fun makeOwnerAware() {
+        dataHolder.data.observe(owner, android.arch.lifecycle.Observer { showMediaResponse(it) })
+    }
+
+    private fun retrieveMedia(query: String) {
+        var disposable = repository.search(query)
             .subscribeOn(executor.worker)
             .observeOn(executor.ui)
             .subscribe(
                 { mediaResponse ->
-                    // convert to media list first
-                    val convertedResponse: ArrayList<Media> = this.handleResponse(mediaResponse)
-
-                    if (convertedResponse.size == 0) {
+                    var convertedData = handleResponse(mediaResponse)
+                    if (convertedData.size == 0) {
                         // if no valid Media results
                         view.showNoMatchesError()
                     } else {
-                        // then pass to view to display
-                        view.showMedia(convertedResponse)
+                        dataHolder.mediaData(convertedData)
                     }
                 },
-                { error -> view.showGenericError() }
+                {
+                    view.showGenericError()
+                }
             )
+
+        dataHolder.disposables.add(disposable)
+    }
+
+    private fun showMediaResponse(convertedData: ArrayList<Media>?) {
+        val mediaList = convertedData ?: convertedData ?: ArrayList<Media>()
+        view.showMedia(mediaList)
     }
 
     // Convert MediaResponse to a ArrayList<Media> and return
@@ -140,6 +171,7 @@ class MediaPresenter(
         }
         return mediaData
     }
+
 }
 
 class MediaRepository(private val client: MediaClient) : MediaContract.Repository {
